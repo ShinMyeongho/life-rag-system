@@ -1,0 +1,51 @@
+# 환경 변수 (절대 업로드 금지)
+.env
+.env.*
+!.env.docker.example   # Docker 예시 파일은 공개 허용
+
+# 벡터 인덱스
+faiss_index/
+
+# 개인 데이터
+data/
+*.json
+user_config.py
+
+# 백업 파일 (실제 일기 데이터 포함)
+backups/
+
+# 생성된 포트폴리오 PDF
+portfolio_diary.pdf
+
+# RAG 원본 문서
+rag_docs/
+
+# Python
+__pycache__/
+*.pyc
+
+# 가상환경
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 런타임 로그
+logs/
+
+# 임시
+*.log
+*.tmp
+.claude/
+.ipynb_checkpoints/
+evaluate_rag.ipynb
+일기장.bat
+
+# Claude Code 메모리 (로컬 전용)
+memory/

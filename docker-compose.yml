@@ -1,0 +1,121 @@
+# ────────────────────────────────────────────────────────────────
+# docker-compose.yml  –  나의 일기장
+#
+# [서비스 구성]
+#   db  : MySQL 8.0  (영구 볼륨, 자동 스키마 초기화)
+#   app : Streamlit 앱  (db 헬스체크 통과 후 기동)
+#
+# [사전 준비]
+#   1. .env 파일 생성 (아래 .env.example 참조)
+#   2. user_config.py 생성  (user_config.example.py 복사 후 수정)
+#      cp user_config.example.py user_config.py
+#
+# [실행]
+#   docker compose up -d           # 백그라운드 기동
+#   docker compose logs -f app     # 앱 로그 실시간 확인
+#   docker compose down            # 종료 (데이터 볼륨 유지)
+#   docker compose down -v         # 종료 + 볼륨 삭제 (초기화)
+#
+# [RAG 인덱스 빌드] (최초 1회 또는 문서 추가 후)
+#   docker compose exec app python build_rag.py
+# ────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── MySQL 8.0 ──────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: diary-db
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE:      ${DB_NAME:-diary_db}
+      MYSQL_USER:          ${DB_USER:-diary_user}
+      MYSQL_PASSWORD:      ${DB_PASSWORD}
+      # MySQL 한국어 지원
+      MYSQL_ROOT_HOST:     "%"
+
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+
+    volumes:
+      # 영구 데이터 (컨테이너 삭제 후에도 유지)
+      - mysql_data:/var/lib/mysql
+      # 최초 기동 시 스키마 자동 생성
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+
+    ports:
+      # 로컬에서 직접 MySQL 접속 시 (필요 없으면 주석 처리)
+      - "3307:3306"   # 로컬 3306이 이미 사용 중일 경우를 대비해 3307로 매핑
+
+    healthcheck:
+      test:     ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout:  5s
+      retries:  10
+      start_period: 30s
+
+  # ── Streamlit 앱 ───────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: diary-app
+    restart: unless-stopped
+
+    # DB 헬스체크 통과 후 앱 기동
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # .env에서 환경 변수 주입
+    # DB_HOST는 서비스명 'db'로 오버라이드 (컨테이너 내부 DNS)
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db           # docker-compose 내부 DNS → 'db' 서비스
+      DB_PORT: 3306         # 컨테이너 내부 포트 (호스트 매핑과 무관)
+
+    ports:
+      - "8501:8501"
+
+    volumes:
+      # ── 개인 설정 (읽기 전용 마운트) ──────────────────────
+      # user_config.py는 git에 포함되지 않음 → 호스트 파일을 마운트
+      - ./user_config.py:/app/user_config.py:ro
+
+      # ── 영구 데이터 ────────────────────────────────────────
+      # FAISS 인덱스: 컨테이너 재시작 후에도 재빌드 불필요
+      - ./faiss_index:/app/faiss_index
+
+      # 로컬 JSON 백업 & pending
+      - ./data:/app/data
+
+      # 회고 마크다운 파일
+      # (data 볼륨에 포함되나 명시적으로 표기)
+
+      # 런타임 로그
+      - ./logs:/app/logs
+
+      # RAG 원본 문서 (refine_rag.py / translate_rag.py 입력)
+      - ./rag_docs:/app/rag_docs
+
+      # HuggingFace 모델 캐시 (최초 다운로드 후 재사용)
+      - hf_model_cache:/root/.cache/huggingface
+
+    healthcheck:
+      test:         ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval:     30s
+      timeout:      10s
+      start_period: 90s   # 모델 로드에 시간이 걸릴 수 있음
+      retries:      3
+
+# ── Named Volumes ───────────────────────────────────────────────
+volumes:
+  mysql_data:
+    driver: local
+  hf_model_cache:
+    driver: local

@@ -1,0 +1,9 @@
+[server]
+# "poll" 방식: 모듈 내부를 깊이 스캔하지 않아
+# transformers/torchvision 관련 수백 줄 노이즈 제거.
+# 코드 수정 후 자동 리로드는 여전히 작동함.
+fileWatcherType = "poll"
+
+[logger]
+# Streamlit 내부 로그 레벨. WARNING 이상만 출력.
+level = "warning"

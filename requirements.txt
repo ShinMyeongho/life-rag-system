@@ -1,0 +1,44 @@
+# ────────────────────────────────────────────────────────────────
+# requirements.txt  –  나의 일기장 (personal diary app)
+#
+# [설치 방법]
+# 일반(로컬):
+#   pip install -r requirements.txt
+#
+# Docker (CPU-only torch 권장):
+#   → Dockerfile이 torch를 먼저 CPU 빌드로 설치하므로 직접 실행 불필요
+#
+# [주의]
+#   torch는 이 파일에 포함되지 않음.
+#   Dockerfile 에서 --index-url https://download.pytorch.org/whl/cpu 로 별도 설치.
+#   로컬 conda 환경에는 이미 torch==2.11.0 설치됨.
+# ────────────────────────────────────────────────────────────────
+
+# ── Web UI ──────────────────────────────────────────────────────
+streamlit==1.57.0
+
+# ── LLM APIs ────────────────────────────────────────────────────
+anthropic==0.100.0
+google-genai==2.4.0
+
+# ── LangChain ───────────────────────────────────────────────────
+langchain==1.2.17
+langchain-community==0.4.1
+langchain-core==1.3.3
+langchain-huggingface==1.2.2
+langchain-text-splitters==1.1.2
+
+# ── Database ────────────────────────────────────────────────────
+PyMySQL==1.1.3
+python-dotenv==1.2.2
+
+# ── Data science ────────────────────────────────────────────────
+numpy==2.4.4
+pandas==3.0.2
+
+# ── RAG / Retrieval ─────────────────────────────────────────────
+# torch: Dockerfile에서 CPU 빌드로 별도 설치 (아래 패키지들이 torch에 의존)
+faiss-cpu==1.13.2
+rank-bm25==0.2.2
+sentence-transformers==5.4.1
+transformers==5.8.0
