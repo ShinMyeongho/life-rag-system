@@ -504,3 +504,59 @@ class TestRagKForRange:
             start = date(2025, 1, 1)
             end = start + timedelta(days=days)
             assert self.fn(start, end) > 0
+
+
+# ── make_dedup_key ──────────────────────────────────────
+
+class TestMakeDedupKey:
+    """
+    Claude분석 페이지의 RAG 결과 중복 제거 키 테스트.
+
+    [버그 배경]
+    기존에는 표시용 content("[출처: ... | CE=1.23]\n...")의 앞 150자를
+    dedup 키로 사용했는데, CE/RRF 점수가 쿼리마다 달라서 같은 문서가
+    다른 키로 계산됨 → 여러 쿼리에서 같은 문서를 가져와도 중복 제거가
+    한 번도 동작하지 않고, 동일 참고문서가 프롬프트에 반복 포함됐다.
+    → 점수와 무관한 (source, 원본 내용) 기반 키를 사용해야 한다.
+    """
+
+    def _result(self, source, raw, ce):
+        return {
+            "content": f"[출처: {source} | CE={ce:.2f}]\n{raw[:300]}",
+            "raw_content": raw[:300],
+            "source": source,
+            "score": ce,
+        }
+
+    def test_same_doc_different_scores_same_key(self):
+        """같은 문서가 다른 점수로 검색돼도 키는 같아야 한다."""
+        from rag_search import make_dedup_key
+        raw = "수면 위생: 취침 전 카페인 섭취를 피하고 규칙적인 기상 시간을 유지한다." * 5
+        r1 = self._result("sleep_guide.pdf", raw, 1.23)
+        r2 = self._result("sleep_guide.pdf", raw, -0.57)
+        assert make_dedup_key(r1) == make_dedup_key(r2)
+
+    def test_different_docs_different_keys(self):
+        from rag_search import make_dedup_key
+        r1 = self._result("sleep_guide.pdf", "수면 위생에 대한 내용", 1.0)
+        r2 = self._result("cbt_workbook.pdf", "자동사고 기록지 작성법", 1.0)
+        assert make_dedup_key(r1) != make_dedup_key(r2)
+
+    def test_same_content_different_source_different_keys(self):
+        """내용이 같아도 출처가 다르면 다른 문서로 취급."""
+        from rag_search import make_dedup_key
+        r1 = self._result("a.pdf", "동일한 내용", 1.0)
+        r2 = self._result("b.pdf", "동일한 내용", 1.0)
+        assert make_dedup_key(r1) != make_dedup_key(r2)
+
+    def test_fallback_without_raw_content(self):
+        """raw_content가 없으면 content로라도 동작해야 한다 (하위 호환)."""
+        from rag_search import make_dedup_key
+        r = {"content": "본문 텍스트", "source": "x.pdf"}
+        key = make_dedup_key(r)
+        assert isinstance(key, tuple) and key[0] == "x.pdf"
+
+    def test_key_is_hashable(self):
+        from rag_search import make_dedup_key
+        r = self._result("a.pdf", "내용", 0.5)
+        assert make_dedup_key(r) in {make_dedup_key(r)}

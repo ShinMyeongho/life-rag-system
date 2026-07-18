@@ -295,6 +295,21 @@ class HybridSearcher:
         return bool(self._docs)
 
 
+def make_dedup_key(result: dict, key_len: int = 150) -> tuple[str, str]:
+    """
+    RAG 검색 결과의 중복 제거 키를 반환.
+
+    [버그 수정 배경]
+    표시용 content("[출처: ... | CE=1.23]\\n...") 앞부분을 키로 쓰면
+    CE/RRF 점수가 쿼리마다 달라져 같은 문서가 매번 다른 키로 계산됨
+    → 여러 쿼리에 걸친 중복 제거가 전혀 동작하지 않고 동일 참고문서가
+    프롬프트에 반복 포함됐다. 점수와 무관한 (source, 원본 내용) 기반
+    키를 사용한다.
+    """
+    raw = result.get("raw_content") or result.get("content", "")
+    return (result.get("source", ""), raw[:key_len])
+
+
 # ── 모듈 레벨 싱글턴 ──────────────────────────────────────
 _searcher: Optional[HybridSearcher] = None
 

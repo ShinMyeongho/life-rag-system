@@ -36,7 +36,7 @@ def _ensure_columns():
 
         conn.commit()
     except Exception:
-        logger.error("cbt_sessions 스키마 마이그레이션 오류")
+        logger.exception("cbt_sessions 스키마 마이그레이션 오류")
     finally:
         if conn:
             conn.close()
@@ -61,7 +61,7 @@ def create_cbt_session(session_date, title="새 대화"):
         conn.commit()
         return session_id
     except Exception:
-        logger.error("CBT 세션 생성 오류")
+        logger.exception("CBT 세션 생성 오류")
         return None
     finally:
         if conn:
@@ -80,7 +80,7 @@ def update_cbt_session_title(session_id, title):
         conn.commit()
         return True
     except Exception:
-        logger.error("CBT 세션 제목 업데이트 오류: id=%s", session_id)
+        logger.exception("CBT 세션 제목 업데이트 오류: id=%s", session_id)
         return False
     finally:
         if conn:
@@ -109,7 +109,7 @@ def load_cbt_sessions(limit=30):
             for r in rows
         ]
     except Exception:
-        logger.error("CBT 세션 목록 로드 오류")
+        logger.exception("CBT 세션 목록 로드 오류")
         return []
     finally:
         if conn:
@@ -133,7 +133,7 @@ def load_cbt_messages(session_id):
             for r in rows
         ]
     except Exception:
-        logger.error("CBT 메시지 로드 오류: session_id=%s", session_id)
+        logger.exception("CBT 메시지 로드 오류: session_id=%s", session_id)
         return []
     finally:
         if conn:
@@ -152,7 +152,7 @@ def save_cbt_message(session_id, role, content):
         conn.commit()
         return True
     except Exception:
-        logger.error("CBT 메시지 저장 오류: session_id=%s", session_id)
+        logger.exception("CBT 메시지 저장 오류: session_id=%s", session_id)
         return False
     finally:
         if conn:
@@ -169,7 +169,7 @@ def delete_cbt_session(session_id):
         conn.commit()
         return True
     except Exception:
-        logger.error("CBT 세션 삭제 오류: id=%s", session_id)
+        logger.exception("CBT 세션 삭제 오류: id=%s", session_id)
         return False
     finally:
         if conn:
@@ -197,7 +197,7 @@ def save_cbt_emotion_tags(session_id, tags: list[str]) -> bool:
         conn.commit()
         return True
     except Exception:
-        logger.error("감정 태그 저장 오류: session_id=%s", session_id)
+        logger.exception("감정 태그 저장 오류: session_id=%s", session_id)
         return False
     finally:
         if conn:
@@ -217,7 +217,7 @@ def load_cbt_emotion_tags(session_id) -> list[str]:
             return json.loads(row["emotion_tags"])
         return []
     except Exception:
-        logger.error("감정 태그 로드 오류: session_id=%s", session_id)
+        logger.exception("감정 태그 로드 오류: session_id=%s", session_id)
         return []
     finally:
         if conn:
@@ -238,7 +238,7 @@ def save_cbt_summary(session_id, summary: str) -> bool:
         conn.commit()
         return True
     except Exception:
-        logger.error("세션 요약 저장 오류: session_id=%s", session_id)
+        logger.exception("세션 요약 저장 오류: session_id=%s", session_id)
         return False
     finally:
         if conn:
@@ -256,7 +256,7 @@ def load_cbt_summary(session_id) -> str | None:
             row = cursor.fetchone()
         return row["summary"] if row else None
     except Exception:
-        logger.error("세션 요약 로드 오류: session_id=%s", session_id)
+        logger.exception("세션 요약 로드 오류: session_id=%s", session_id)
         return None
     finally:
         if conn:

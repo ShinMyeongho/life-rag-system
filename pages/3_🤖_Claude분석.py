@@ -13,7 +13,7 @@ from utils import (
 )
 from user_config import USER_PROFILE
 from api_client import call_claude
-from rag_search import HybridSearcher
+from rag_search import HybridSearcher, make_dedup_key
 
 st.set_page_config(page_title="나의 일기장", page_icon="📔", layout="wide")
 from theme import init_page_style
@@ -64,6 +64,7 @@ def search_rag(query, k=5):
             score_str = f"CE={ce:.2f}" if ce is not None else f"RRF={doc.get('rrf_score', 0):.4f}"
             results.append({
                 "content": f"[출처: {source} | {score_str}]\n{doc['content'][:300]}",
+                "raw_content": doc["content"][:300],   # 중복 제거용 (점수 미포함)
                 "score":   doc.get("rrf_score", 0),
                 "source":  source,
                 "doc_type": doc.get("doc_type", "refined"),
@@ -283,7 +284,9 @@ if st.button("🤖 분석 시작", type="primary"):
             seen_contents = set()
             for query in rag_queries:
                 for r in search_rag(query, k=rag_k):
-                    content_key = r["content"][:150]
+                    # 점수 문자열이 붙은 표시용 content 대신
+                    # (출처, 원본 내용) 기반 키로 중복 제거
+                    content_key = make_dedup_key(r)
                     if content_key not in seen_contents:
                         seen_contents.add(content_key)
                         rag_context += r["content"] + "\n\n"

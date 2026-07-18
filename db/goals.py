@@ -33,7 +33,7 @@ def load_month_goals_db(year, month):
             return [g for g in goals if g]
         return []
     except Exception:
-        logger.error("월간 목표 로드 오류: ym=%s", ym)
+        logger.exception("월간 목표 로드 오류: ym=%s", ym)
         return []
     finally:
         if conn:
@@ -56,7 +56,7 @@ def save_month_goals_db(year, month, goals):
         load_month_goals_db.clear()
         return True
     except Exception:
-        logger.error("월간 목표 저장 오류: ym=%s", ym)
+        logger.exception("월간 목표 저장 오류: ym=%s", ym)
         return False
     finally:
         if conn:
@@ -79,7 +79,7 @@ def load_week_goals_db(year, week):
             return [g for g in goals if g]
         return []
     except Exception:
-        logger.error("주간 목표 로드 오류: yw=%s", yw)
+        logger.exception("주간 목표 로드 오류: yw=%s", yw)
         return []
     finally:
         if conn:
@@ -102,7 +102,7 @@ def save_week_goals_db(year, week, goals):
         load_week_goals_db.clear()
         return True
     except Exception:
-        logger.error("주간 목표 저장 오류: yw=%s", yw)
+        logger.exception("주간 목표 저장 오류: yw=%s", yw)
         return False
     finally:
         if conn:

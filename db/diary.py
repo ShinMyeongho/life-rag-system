@@ -64,7 +64,7 @@ def load_diary_db(date_str):
             row = cursor.fetchone()
         return _row_to_diary(row) if row else None
     except Exception:
-        logger.error("일기 로드 오류: date=%s", date_str)
+        logger.exception("일기 로드 오류: date=%s", date_str)
         return None
     finally:
         if conn:
@@ -84,7 +84,7 @@ def load_diaries_range_db(start_date, end_date):
             rows = cursor.fetchall()
         return [_row_to_diary(row) for row in rows]
     except Exception:
-        logger.error("일기 범위 로드 오류: %s ~ %s", start_date, end_date)
+        logger.exception("일기 범위 로드 오류: %s ~ %s", start_date, end_date)
         return []
     finally:
         if conn:
@@ -172,7 +172,7 @@ def save_diary_db(entry):
         load_diaries_range_db.clear()
         return True
     except Exception:
-        logger.error("일기 저장 오류: date=%s", entry.get("date"))
+        logger.exception("일기 저장 오류: date=%s", entry.get("date"))
         return False
     finally:
         if conn:

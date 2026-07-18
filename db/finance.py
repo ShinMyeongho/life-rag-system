@@ -45,7 +45,7 @@ def load_loans_db():
             for r in rows
         ]
     except Exception:
-        logger.error("대출 로드 오류")
+        logger.exception("대출 로드 오류")
         return DEFAULT_LOANS
     finally:
         if conn:
@@ -71,7 +71,7 @@ def save_loan_db(loan):
         load_loans_db.clear()
         return True
     except Exception:
-        logger.error("대출 저장 오류: name=%s", loan.get("name"))
+        logger.exception("대출 저장 오류: name=%s", loan.get("name"))
         return False
     finally:
         if conn:
@@ -103,7 +103,7 @@ def load_fixed_db():
             return DEFAULT_FIXED
         return [{"name": r["name"], "amount": r["amount"]} for r in rows]
     except Exception:
-        logger.error("고정지출 로드 오류")
+        logger.exception("고정지출 로드 오류")
         return DEFAULT_FIXED
     finally:
         if conn:
@@ -124,7 +124,7 @@ def save_fixed_item_db(name, amount):
         load_fixed_db.clear()
         return True
     except Exception:
-        logger.error("고정지출 저장 오류: name=%s", name)
+        logger.exception("고정지출 저장 오류: name=%s", name)
         return False
     finally:
         if conn:
@@ -145,7 +145,7 @@ def load_income_db():
             return {"monthly": row["monthly"], "memo": row["memo"]}
         return {"monthly": 0, "memo": "수입 없음"}
     except Exception:
-        logger.error("수입 로드 오류")
+        logger.exception("수입 로드 오류")
         return {"monthly": 0, "memo": "수입 없음"}
     finally:
         if conn:
@@ -173,7 +173,7 @@ def save_income_db(monthly, memo):
         load_income_db.clear()
         return True
     except Exception:
-        logger.error("수입 저장 오류")
+        logger.exception("수입 저장 오류")
         return False
     finally:
         if conn:
@@ -203,7 +203,7 @@ def load_ledger_db(month_str=None):
             for r in rows
         ]
     except Exception:
-        logger.error("원장 로드 오류: month=%s", month_str)
+        logger.exception("원장 로드 오류: month=%s", month_str)
         return []
     finally:
         if conn:
@@ -224,7 +224,7 @@ def save_ledger_db(entry):
         load_ledger_db.clear()
         return True
     except Exception:
-        logger.error("원장 저장 오류")
+        logger.exception("원장 저장 오류")
         return False
     finally:
         if conn:
@@ -241,7 +241,7 @@ def delete_ledger_db(entry_id):
         load_ledger_db.clear()
         return True
     except Exception:
-        logger.error("원장 삭제 오류: id=%s", entry_id)
+        logger.exception("원장 삭제 오류: id=%s", entry_id)
         return False
     finally:
         if conn:
@@ -259,7 +259,7 @@ def clear_ledger_db():
         load_ledger_db.clear()
         return True
     except Exception:
-        logger.error("원장 전체 삭제 오류")
+        logger.exception("원장 전체 삭제 오류")
         return False
     finally:
         if conn:
